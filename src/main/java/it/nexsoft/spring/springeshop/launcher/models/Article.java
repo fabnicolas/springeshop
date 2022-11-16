@@ -1,14 +1,17 @@
 package it.nexsoft.spring.springeshop.launcher.models;
 
+import java.util.Set;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-@Entity
 @Table(name = "articles")
+@Entity
 public class Article {
 
 	@Id
@@ -23,6 +26,9 @@ public class Article {
 
 	@Column(name = "price")
 	private double price;
+
+	@OneToMany(mappedBy = "article")
+	private Set<PurchaseItem> purchases;
 
 	public Article() {
 	}
