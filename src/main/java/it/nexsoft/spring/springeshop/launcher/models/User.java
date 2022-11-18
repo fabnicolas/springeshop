@@ -31,7 +31,7 @@ public class User {
 	private String phone;
 
 	@OneToMany(mappedBy = "user")
-	private Set<PurchaseItem> purchases;
+	private Set<Order> purchases;
 
 	public User() {
 
@@ -84,11 +84,11 @@ public class User {
 		this.phone = phone;
 	}
 
-	public Set<PurchaseItem> getPurchases() {
+	public Set<Order> getPurchases() {
 		return purchases;
 	}
 
-	public void setPurchases(final Set<PurchaseItem> purchases) {
+	public void setPurchases(final Set<Order> purchases) {
 		this.purchases = purchases;
 	}
 
