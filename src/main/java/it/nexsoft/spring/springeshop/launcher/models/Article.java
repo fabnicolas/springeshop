@@ -28,7 +28,7 @@ public class Article {
 	private double price;
 
 	@OneToMany(mappedBy = "article")
-	private Set<PurchaseItem> purchases;
+	private Set<Order> purchases;
 
 	public Article() {
 	}
