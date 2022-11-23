@@ -1,4 +1,4 @@
-package test.models;
+package it.nexsoft.spring.springeshop.testmodels;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -21,9 +21,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.google.gson.Gson;
 
-import it.nexsoft.spring.springeshop.launcher.ApplicationLauncher;
-import it.nexsoft.spring.springeshop.launcher.models.Article;
-import it.nexsoft.spring.springeshop.launcher.repositories.ArticleRepository;
+import it.nexsoft.spring.springeshop.ApplicationLauncher;
+import it.nexsoft.spring.springeshop.models.Article;
+import it.nexsoft.spring.springeshop.repositories.ArticleRepository;
 
 @SpringBootTest(classes = ApplicationLauncher.class)
 @AutoConfigureMockMvc

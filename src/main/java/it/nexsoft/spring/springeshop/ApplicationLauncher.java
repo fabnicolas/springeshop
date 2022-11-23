@@ -1,4 +1,4 @@
-package it.nexsoft.spring.springeshop.launcher;
+package it.nexsoft.spring.springeshop;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

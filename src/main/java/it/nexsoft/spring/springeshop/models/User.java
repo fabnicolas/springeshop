@@ -1,4 +1,4 @@
-package it.nexsoft.spring.springeshop.launcher.models;
+package it.nexsoft.spring.springeshop.models;
 
 import java.util.Set;
 

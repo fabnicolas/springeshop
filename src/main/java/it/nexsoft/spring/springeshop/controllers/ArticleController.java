@@ -1,4 +1,4 @@
-package it.nexsoft.spring.springeshop.launcher.controllers;
+package it.nexsoft.spring.springeshop.controllers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import it.nexsoft.spring.springeshop.launcher.models.Article;
-import it.nexsoft.spring.springeshop.launcher.repositories.ArticleRepository;
+import it.nexsoft.spring.springeshop.models.Article;
+import it.nexsoft.spring.springeshop.repositories.ArticleRepository;
 
 @RestController
 @RequestMapping("/prova")
