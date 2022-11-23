@@ -1,0 +1,9 @@
+<databaseChangeLog
+xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+    <!-- Changelog loader. Includo tutti i changelogs che rispettano questo pattern. -->
+    <!-- Disattivabile commentandolo ed utilizzando include file includendo a mano i changelogs. -->
+    <includeAll path="/liquibase/database/changelogs/**/changelog*.xml"/>
+</databaseChangeLog>
