@@ -26,7 +26,7 @@ import it.nexsoft.spring.springeshop.models.Article;
 import it.nexsoft.spring.springeshop.repositories.ArticleRepository;
 
 @SpringBootTest(classes = ApplicationLauncher.class)
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @WithMockUser
 class ArticleCrud {
 
