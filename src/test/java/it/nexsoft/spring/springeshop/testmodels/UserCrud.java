@@ -26,7 +26,7 @@ import it.nexsoft.spring.springeshop.models.User;
 import it.nexsoft.spring.springeshop.repositories.UserRepository;
 
 @SpringBootTest(classes = ApplicationLauncher.class)
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @WithMockUser
 class UserCrud {
 
@@ -41,18 +41,21 @@ class UserCrud {
 	private static final String CREATED_FNAME = "provanome";
 	private static final String CREATED_LNAME = "provacognome";
 	private static final String CREATED_EMAIL = "provaemail";
+	private static final String CREATED_PASSWORD = "$2a$10$Po1.sDsJpv8vln496vV9v.cVRO9Hg64lZ439.7PXBaDDUWJDTlks2";
 	private static final String CREATED_PHONE = "provaphone";
 
 	// Variabili per l'aggiornamento
 	private static final String UPDATED_FNAME = "aggiornanome";
 	private static final String UPDATED_LNAME = "aggiornacognome";
 	private static final String UPDATED_EMAIL = "aggiornaemail";
+	private static final String UPDATED_PASSWORD = "$2a$10$38qOT5gILqj3dc.yMaNIMu/Fw0NrjTIrWUM3eClZQ4sEgxvTLAQh6";
 	private static final String UPDATED_PHONE = "aggiornaphone";
 
 	// Variabili per creazione utenti di prova
 	private static final String MOCK_FNAME = "mocknome";
 	private static final String MOCK_LNAME = "mockcognome";
 	private static final String MOCK_EMAIL = "mockemail";
+	private static final String MOCK_PASSWORD = "$2a$10$Po1.sDsJpv8vln496vV9v.cVRO9Hg64lZ439.7PXBaDDUWJDTlks2";
 	private static final String MOCK_PHONE = "mockphone";
 
 	@Autowired
@@ -64,9 +67,9 @@ class UserCrud {
 	// Cambiato valore email in quanto chiave unica
 	@BeforeEach
 	public void initDB() {
-		userRepository.save(new User(MOCK_FNAME, MOCK_LNAME, MOCK_EMAIL, MOCK_PHONE));
-		userRepository.save(new User(MOCK_FNAME, MOCK_LNAME, MOCK_EMAIL + 1, MOCK_PHONE));
-		userRepository.save(new User(MOCK_FNAME, MOCK_LNAME, MOCK_EMAIL + 2, MOCK_PHONE));
+		userRepository.save(new User(MOCK_FNAME, MOCK_LNAME, MOCK_EMAIL, MOCK_PASSWORD, MOCK_PHONE));
+		userRepository.save(new User(MOCK_FNAME, MOCK_LNAME, MOCK_EMAIL + 1, MOCK_PASSWORD, MOCK_PHONE));
+		userRepository.save(new User(MOCK_FNAME, MOCK_LNAME, MOCK_EMAIL + 2, MOCK_PASSWORD, MOCK_PHONE));
 	}
 
 	@AfterEach
@@ -83,6 +86,7 @@ class UserCrud {
 		u.setFirstName(CREATED_FNAME);
 		u.setLastName(CREATED_LNAME);
 		u.setEmail(CREATED_EMAIL);
+		u.setPassword(CREATED_PASSWORD);
 		u.setPhone(CREATED_PHONE);
 
 		// Chiamata metodo POST
@@ -100,6 +104,7 @@ class UserCrud {
 		assertThat(retrieveUser.getFirstName()).isEqualTo(CREATED_FNAME);
 		assertThat(retrieveUser.getLastName()).isEqualTo(CREATED_LNAME);
 		assertThat(retrieveUser.getEmail()).isEqualTo(CREATED_EMAIL);
+		assertThat(retrieveUser.getPassword()).isEqualTo(CREATED_PASSWORD);
 		assertThat(retrieveUser.getPhone()).isEqualTo(CREATED_PHONE);
 	}
 
@@ -112,6 +117,7 @@ class UserCrud {
 		u.setFirstName(CREATED_FNAME);
 		u.setLastName(CREATED_LNAME);
 		u.setEmail(CREATED_EMAIL);
+		u.setPassword(CREATED_PASSWORD);
 		u.setPhone(CREATED_PHONE);
 
 		// Chiamata metodo POST
@@ -130,7 +136,7 @@ class UserCrud {
 	}
 
 	@Test
-	public void updateUSer() throws Exception {
+	public void updateUser() throws Exception {
 		final List<User> originalList = userRepository.findAll();
 
 		final User original = originalList.get(originalList.size() - 1);
@@ -139,6 +145,7 @@ class UserCrud {
 		original.setFirstName(UPDATED_FNAME);
 		original.setLastName(UPDATED_LNAME);
 		original.setEmail(UPDATED_EMAIL);
+		original.setPassword(UPDATED_PASSWORD);
 		original.setPhone(UPDATED_PHONE);
 
 		// Chiamata metodo PUT
@@ -156,18 +163,19 @@ class UserCrud {
 		assertThat(updated.getFirstName()).isEqualTo(UPDATED_FNAME);
 		assertThat(updated.getLastName()).isEqualTo(UPDATED_LNAME);
 		assertThat(updated.getEmail()).isEqualTo(UPDATED_EMAIL);
+		assertThat(updated.getPassword()).isEqualTo(UPDATED_PASSWORD);
 		assertThat(updated.getPhone()).isEqualTo(UPDATED_PHONE);
 	}
 
 	@Test
-	public void deleteArticle() throws Exception {
+	public void deleteUser() throws Exception {
 		final int databaseOriginalSize = userRepository.findAll().size();
 
 		// Prendiamo l'ultimo utente
-		final User deleteArticle = userRepository.findAll().get(databaseOriginalSize - 1);
+		final User deleteUser = userRepository.findAll().get(databaseOriginalSize - 1);
 
 		// Chiamata metodo DELETE
-		userControllerMockMvc.perform(delete(ENTITY_API_URL + DELETE_URL + "/{id}", deleteArticle.getId()))
+		userControllerMockMvc.perform(delete(ENTITY_API_URL + DELETE_URL + "/{id}", deleteUser.getId()))
 				.andExpect(status().isNoContent());
 
 		final int databaseUpdatedSize = userRepository.findAll().size();

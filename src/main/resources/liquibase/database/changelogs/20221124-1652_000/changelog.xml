@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <!-- Script inclusi rispettando l'ordine di esecuzione -->
+    
+    <include file="sql/drop_some_columns_from_users.sql" relativeToChangelogFile="true"/>
+    <include file="sql/add_some_columns_to_users.sql" relativeToChangelogFile="true"/>
+</databaseChangeLog>
