@@ -7,7 +7,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +19,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.google.gson.Gson;
 
@@ -28,14 +32,15 @@ import it.nexsoft.spring.springeshop.repositories.UserRepository;
 @SpringBootTest(classes = ApplicationLauncher.class)
 @AutoConfigureMockMvc
 @WithMockUser
-class UserCrud {
+@Transactional
+@ActiveProfiles("test")
+public class UserCrud {
 
 	private static final String ENTITY_API_URL = "/prova/";
 	private static final String GET_URL = "getallusers";
 	private static final String POST_URL = "postuser";
 	private static final String PUT_URL = "putuser";
 	private static final String DELETE_URL = "deleteuser";
-	private static final String DELETE_URL_1 = "deleteallusers";
 
 	// Variabili per la creazione
 	private static final String CREATED_FNAME = "provanome";
@@ -61,17 +66,23 @@ class UserCrud {
 	@Autowired
 	private MockMvc userControllerMockMvc;
 
+	private final ArrayList<Long> idUsers = new ArrayList<>();
+
 	// Cambiato valore email in quanto chiave unica
 	@BeforeEach
 	public void initDB() {
-		userRepository.save(new User(MOCK_FNAME, MOCK_LNAME, MOCK_EMAIL, MOCK_PHONE));
-		userRepository.save(new User(MOCK_FNAME, MOCK_LNAME, MOCK_EMAIL + 1, MOCK_PHONE));
-		userRepository.save(new User(MOCK_FNAME, MOCK_LNAME, MOCK_EMAIL + 2, MOCK_PHONE));
+		// vengono inseriti gli id degli utenti salvati in una ArrayList, in modo che
+		// dopo possono essere tolti dal db
+		idUsers.add(userRepository.save(new User(MOCK_FNAME, MOCK_LNAME, MOCK_EMAIL, MOCK_PHONE)).getId());
+		idUsers.add(userRepository.save(new User(MOCK_FNAME, MOCK_LNAME, MOCK_EMAIL + 1, MOCK_PHONE)).getId());
+		idUsers.add(userRepository.save(new User(MOCK_FNAME, MOCK_LNAME, MOCK_EMAIL + 2, MOCK_PHONE)).getId());
 	}
 
 	@AfterEach
 	public void clearDB() {
-		userRepository.deleteAll();
+		for (final Long id : idUsers) {
+			userRepository.deleteById(id);
+		}
 	}
 
 	@Test
@@ -101,39 +112,33 @@ class UserCrud {
 		assertThat(retrieveUser.getLastName()).isEqualTo(CREATED_LNAME);
 		assertThat(retrieveUser.getEmail()).isEqualTo(CREATED_EMAIL);
 		assertThat(retrieveUser.getPhone()).isEqualTo(CREATED_PHONE);
+
+		// cancellazione utente creato
+		userRepository.deleteById(retrieveUser.getId());
 	}
 
 	@Test
 	public void getAllUsers() throws Exception {
-		final int databaseOriginalSize = userRepository.findAll().size();
 
-		// Creazione nuovo utente
-		final User u = new User();
-		u.setFirstName(CREATED_FNAME);
-		u.setLastName(CREATED_LNAME);
-		u.setEmail(CREATED_EMAIL);
-		u.setPhone(CREATED_PHONE);
-
-		// Chiamata metodo POST
-		userControllerMockMvc.perform(
-				post(ENTITY_API_URL + POST_URL).contentType(MediaType.APPLICATION_JSON).content(new Gson().toJson(u)))
-				.andExpect(status().isCreated());
+		final ArrayList<User> users = (ArrayList<User>) userRepository.findAllById(idUsers);
 
 		// Chiamata metodo GET
 		userControllerMockMvc.perform(get(ENTITY_API_URL + GET_URL).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk());
 
-		final int databaseActualSize = userRepository.findAll().size();
-
-		// Controllo su taglia del DB
-		assertThat(databaseActualSize).isEqualTo(databaseOriginalSize + 1);
+		// Controllo sugli id degli utenti trovati con la find
+		assertThat(users.get(0).getId()).isEqualTo(idUsers.get(0));
+		assertThat(users.get(1).getId()).isEqualTo(idUsers.get(1));
+		assertThat(users.get(2).getId()).isEqualTo(idUsers.get(2));
 	}
 
 	@Test
-	public void updateUSer() throws Exception {
-		final List<User> originalList = userRepository.findAll();
+	public void updateUser() throws Exception {
 
-		final User original = originalList.get(originalList.size() - 1);
+		// Prendiamo il primo utente di quelli già inseriti
+		final Optional<User> dataOriginal = userRepository.findById(idUsers.get(0));
+		assertThat(dataOriginal.isPresent()).isEqualTo(true);
+		final User original = dataOriginal.get();
 
 		// Aggiornamento dei campi
 		original.setFirstName(UPDATED_FNAME);
@@ -147,10 +152,11 @@ class UserCrud {
 						.contentType(MediaType.APPLICATION_JSON).content(new Gson().toJson(original)))
 				.andExpect(status().isOk());
 
-		final List<User> updatedList = userRepository.findAll();
+		// Prendiamo il primo utente
+		final Optional<User> dataUpdated = userRepository.findById(idUsers.get(0));
+		assertThat(dataUpdated.isPresent()).isEqualTo(true);
 
-		// Prendiamo l'ultimo utente
-		final User updated = userRepository.findAll().get(updatedList.size() - 1);
+		final User updated = dataUpdated.get();
 
 		// Controllo aggiornamento singoli campi
 		assertThat(updated.getFirstName()).isEqualTo(UPDATED_FNAME);
@@ -160,33 +166,24 @@ class UserCrud {
 	}
 
 	@Test
-	public void deleteArticle() throws Exception {
-		final int databaseOriginalSize = userRepository.findAll().size();
+	public void deleteUser() throws Exception {
 
-		// Prendiamo l'ultimo utente
-		final User deleteArticle = userRepository.findAll().get(databaseOriginalSize - 1);
+		// Creazione nuovo utente
+		final User u = new User();
+		u.setFirstName(CREATED_FNAME);
+		u.setLastName(CREATED_LNAME);
+		u.setEmail(CREATED_EMAIL);
+		u.setPhone(CREATED_PHONE);
 
+		// Salviamo il nuovo utente nel DB
+		final User deleteUser = userRepository.save(u);
 		// Chiamata metodo DELETE
-		userControllerMockMvc.perform(delete(ENTITY_API_URL + DELETE_URL + "/{id}", deleteArticle.getId()))
+		userControllerMockMvc.perform(delete(ENTITY_API_URL + DELETE_URL + "/{id}", deleteUser.getId()))
 				.andExpect(status().isNoContent());
 
-		final int databaseUpdatedSize = userRepository.findAll().size();
-
-		// Controllo su taglia del DB
-		assertThat(databaseUpdatedSize).isEqualTo(databaseOriginalSize - 1);
-	}
-
-	@Test
-	public void deleteAll() throws Exception {
-		final int expectedDatabaseSize = 0;
-
-		// Chiamata metodo DELETE
-		userControllerMockMvc.perform(delete(ENTITY_API_URL + DELETE_URL_1)).andExpect(status().isNoContent());
-
-		final int actualDatabaseSize = userRepository.findAll().size();
-
-		// Controllo su taglia del DB
-		assertThat(actualDatabaseSize).isEqualTo(expectedDatabaseSize);
+		// Controllo tramite fallimento findById()
+		final Optional<User> userData = userRepository.findById(deleteUser.getId());
+		assertThat(userData.isPresent()).isEqualTo(false);
 	}
 
 }
