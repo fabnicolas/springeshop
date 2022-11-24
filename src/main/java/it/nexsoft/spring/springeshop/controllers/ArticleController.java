@@ -76,14 +76,4 @@ public class ArticleController {
 		}
 	}
 
-	@DeleteMapping("/deleteallarticles")
-	public ResponseEntity<HttpStatus> deleteAll() {
-		try {
-			repository.deleteAll();
-			return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-		} catch (final Exception e) {
-			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-	}
-
 }

@@ -7,7 +7,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.google.gson.Gson;
 
@@ -28,14 +31,14 @@ import it.nexsoft.spring.springeshop.repositories.ArticleRepository;
 @SpringBootTest(classes = ApplicationLauncher.class)
 @AutoConfigureMockMvc
 @WithMockUser
-class ArticleCrud {
+@Transactional
+public class ArticleCrud {
 
 	private static final String ENTITY_API_URL = "/prova/";
 	private static final String GET_URL = "getallarticles";
 	private static final String POST_URL = "postarticle";
 	private static final String PUT_URL = "putarticle";
 	private static final String DELETE_URL = "deletearticle";
-	private static final String DELETE_URL_1 = "deleteallarticles";
 
 	// Variabili per la creazione
 	private static final String CREATED_NAME = "provaarticolo";
@@ -58,21 +61,26 @@ class ArticleCrud {
 	@Autowired
 	private MockMvc articleControllerMockMvc;
 
+	private final ArrayList<Long> idArticles = new ArrayList<>();
+
 	@BeforeEach
 	public void initDB() {
-		articleRepository.save(new Article(MOCK_NAME, MOCK_DESCRIPTION, MOCK_PRICE));
-		articleRepository.save(new Article(MOCK_NAME, MOCK_DESCRIPTION, MOCK_PRICE));
-		articleRepository.save(new Article(MOCK_NAME, MOCK_DESCRIPTION, MOCK_PRICE));
+		// vengono inseriti gli id degli articoli salvati in una ArrayList, in modo che
+		// dopo possono essere tolti dal db
+		idArticles.add(articleRepository.save(new Article(MOCK_NAME, MOCK_DESCRIPTION, MOCK_PRICE)).getId());
+		idArticles.add(articleRepository.save(new Article(MOCK_NAME, MOCK_DESCRIPTION, MOCK_PRICE)).getId());
+		idArticles.add(articleRepository.save(new Article(MOCK_NAME, MOCK_DESCRIPTION, MOCK_PRICE)).getId());
 	}
 
 	@AfterEach
 	public void clearDB() {
-		articleRepository.deleteAll();
+		for (final Long id : idArticles) {
+			articleRepository.deleteById(id);
+		}
 	}
 
 	@Test
 	public void addArticle() throws Exception {
-		final int databaseSizeBeforeCreate = articleRepository.findAll().size();
 
 		// Creazione nuovo articolo
 		final Article a = new Article();
@@ -85,50 +93,43 @@ class ArticleCrud {
 				post(ENTITY_API_URL + POST_URL).contentType(MediaType.APPLICATION_JSON).content(new Gson().toJson(a)))
 				.andExpect(status().isCreated());
 
-		// Controllo su taglia del DB
-		final List<Article> articleList = articleRepository.findAll();
-		assertThat(articleList).hasSize(databaseSizeBeforeCreate + 1);
+		final List<Article> articles = articleRepository.findAll();
 
-		final Article retrieveArticle = articleRepository.findAll().get(articleList.size() - 1);
-
+		final Article retrieveArticle = articleRepository.findAll().get(articles.size() - 1);
 		// Controllo su inserimento singoli campi
 		assertThat(retrieveArticle.getName()).isEqualTo(CREATED_NAME);
 		assertThat(retrieveArticle.getDescription()).isEqualTo(CREATED_DESCRIPTION);
 		assertThat(retrieveArticle.getPrice()).isEqualTo(CREATED_PRICE);
+
+		// cancellazione articolo creato
+		articleRepository.deleteById(retrieveArticle.getId());
 	}
 
 	@Test
 	public void getAllArticles() throws Exception {
-		final int databaseOriginalSize = articleRepository.findAll().size();
 
-		// Creazione nuovo articolo
-		final Article a = new Article();
-		a.setName(CREATED_NAME);
-		a.setDescription(CREATED_DESCRIPTION);
-		a.setPrice(CREATED_PRICE);
-
-		// Chiamata metodo POST
-		articleControllerMockMvc.perform(
-				post(ENTITY_API_URL + POST_URL).contentType(MediaType.APPLICATION_JSON).content(new Gson().toJson(a)))
-				.andExpect(status().isCreated());
+		final ArrayList<Article> articles = (ArrayList<Article>) articleRepository.findAllById(idArticles);
 
 		// Chiamata metodo GET
 		articleControllerMockMvc.perform(get(ENTITY_API_URL + GET_URL).contentType(MediaType.APPLICATION_JSON))
 				.andExpect(status().isOk());
 
-		final int databaseActualSize = articleRepository.findAll().size();
-
-		// Controllo su taglia del DB
-		assertThat(databaseActualSize).isEqualTo(databaseOriginalSize + 1);
+		// Controllo sugli id degli articoli inseriti con il metodo initDB()
+		assertThat(articles.get(0).getId()).isEqualTo(idArticles.get(0));
+		assertThat(articles.get(1).getId()).isEqualTo(idArticles.get(1));
+		assertThat(articles.get(2).getId()).isEqualTo(idArticles.get(2));
 	}
 
 	@Test
 	public void updateArticle() throws Exception {
-		final List<Article> originalList = articleRepository.findAll();
 
-		final Article original = originalList.get(originalList.size() - 1);
+		// Controllo tramite ricerca per id
+		final Optional<Article> data = articleRepository.findById(idArticles.get(0));
+		assertThat(data.get()).isNotNull();
 
-		// Aggiornamento dei campi
+		final Article original = data.get();
+		// Aggiornamento dei campi per il primo articolo già presente nel DB
+		// inizializzato con il metodo initDB()
 		original.setName(UPDATED_NAME);
 		original.setDescription(UPDATED_DESCRIPTION);
 		original.setPrice(UPDATED_PRICE);
@@ -139,11 +140,11 @@ class ArticleCrud {
 						.contentType(MediaType.APPLICATION_JSON).content(new Gson().toJson(original)))
 				.andExpect(status().isOk());
 
-		final List<Article> updatedList = articleRepository.findAll();
+		// Prendiamo il primo articolo
+		final Optional<Article> dataUpdated = articleRepository.findById(idArticles.get(0));
+		assertThat(dataUpdated.get()).isNotNull();
 
-		// Prendiamo l'ultimo articolo
-		final Article updated = articleRepository.findAll().get(updatedList.size() - 1);
-
+		final Article updated = dataUpdated.get();
 		// Controllo aggiornamento singoli campi
 		assertThat(updated.getName()).isEqualTo(UPDATED_NAME);
 		assertThat(updated.getDescription()).isEqualTo(UPDATED_DESCRIPTION);
@@ -152,32 +153,23 @@ class ArticleCrud {
 
 	@Test
 	public void deleteArticle() throws Exception {
-		final int databaseOriginalSize = articleRepository.findAll().size();
 
-		// Prendiamo l'ultimo articolo
-		final Article deleteArticle = articleRepository.findAll().get(databaseOriginalSize - 1);
+		// Creazione nuovo articolo
+		final Article newArticle = new Article();
+		newArticle.setName(CREATED_NAME);
+		newArticle.setDescription(CREATED_DESCRIPTION);
+		newArticle.setPrice(CREATED_PRICE);
+
+		// Salvataggio nuovo articolo nel DB; verrà cancellato
+		final Article deleteArticle = articleRepository.save(newArticle);
 
 		// Chiamata metodo DELETE
 		articleControllerMockMvc.perform(delete(ENTITY_API_URL + DELETE_URL + "/{id}", deleteArticle.getId()))
 				.andExpect(status().isNoContent());
 
-		final int databaseUpdatedSize = articleRepository.findAll().size();
-
-		// Controllo su taglia del DB
-		assertThat(databaseUpdatedSize).isEqualTo(databaseOriginalSize - 1);
-	}
-
-	@Test
-	public void deleteAll() throws Exception {
-		final int expectedDatabaseSize = 0;
-
-		// Chiamata metodo DELETE
-		articleControllerMockMvc.perform(delete(ENTITY_API_URL + DELETE_URL_1)).andExpect(status().isNoContent());
-
-		final int actualDatabaseSize = articleRepository.findAll().size();
-
-		// Controllo su taglia del DB
-		assertThat(actualDatabaseSize).isEqualTo(expectedDatabaseSize);
+		// Controllo tramite fallimento findById
+		final Optional<Article> data = articleRepository.findById(deleteArticle.getId());
+		assertThat(data.isPresent()).isEqualTo(false);
 	}
 
 }
