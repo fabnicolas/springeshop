@@ -10,6 +10,8 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Table(name = "articles")
 @Entity
 public class Article {
@@ -28,7 +30,8 @@ public class Article {
 	private double price;
 
 	@OneToMany(mappedBy = "article")
-	private Set<Order> purchases;
+	@JsonManagedReference
+	private Set<Order> orders;
 
 	public Article() {
 	}

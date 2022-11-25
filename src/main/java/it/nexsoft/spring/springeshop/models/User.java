@@ -10,6 +10,8 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Table(name = "users")
 @Entity
 public class User {
@@ -31,6 +33,7 @@ public class User {
 	private String phone;
 
 	@OneToMany(mappedBy = "user")
+	@JsonManagedReference
 	private Set<Order> purchases;
 
 	public User() {
