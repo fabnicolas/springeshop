@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -21,6 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.google.gson.Gson;
@@ -91,13 +91,21 @@ public class ArticleCrud {
 		a.setPrice(CREATED_PRICE);
 
 		// Chiamata metodo POST
-		articleControllerMockMvc.perform(
+		final MvcResult result = articleControllerMockMvc.perform(
 				post(ENTITY_API_URL + POST_URL).contentType(MediaType.APPLICATION_JSON).content(new Gson().toJson(a)))
-				.andExpect(status().isCreated());
+				.andExpect(status().isCreated()).andReturn();
 
-		final List<Article> articles = articleRepository.findAll();
+		final String resultString = result.getResponse().getContentAsString();
+		final Gson g = new Gson();
 
-		final Article retrieveArticle = articleRepository.findAll().get(articles.size() - 1);
+		// Conversione del risultato da formato JSON a oggetto Article
+		final Article inserted = g.fromJson(resultString, Article.class);
+
+		// Controllo corretto inserimento con findById()
+		final Optional<Article> retrieveData = articleRepository.findById(inserted.getId());
+		assertThat(retrieveData.isPresent()).isEqualTo(true);
+
+		final Article retrieveArticle = retrieveData.get();
 		// Controllo su inserimento singoli campi
 		assertThat(retrieveArticle.getName()).isEqualTo(CREATED_NAME);
 		assertThat(retrieveArticle.getDescription()).isEqualTo(CREATED_DESCRIPTION);
