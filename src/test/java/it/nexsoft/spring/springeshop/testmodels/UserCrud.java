@@ -8,7 +8,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -21,6 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.google.gson.Gson;
@@ -97,15 +97,20 @@ public class UserCrud {
 		u.setPhone(CREATED_PHONE);
 
 		// Chiamata metodo POST
-		userControllerMockMvc.perform(
+		final MvcResult result = userControllerMockMvc.perform(
 				post(ENTITY_API_URL + POST_URL).contentType(MediaType.APPLICATION_JSON).content(new Gson().toJson(u)))
-				.andExpect(status().isCreated());
+				.andExpect(status().isCreated()).andReturn();
 
-		// Controllo su taglia del DB
-		final List<User> usersList = userRepository.findAll();
-		assertThat(usersList).hasSize(databaseSizeBeforeCreate + 1);
+		final String resultString = result.getResponse().getContentAsString();
+		final Gson g = new Gson();
 
-		final User retrieveUser = userRepository.findAll().get(usersList.size() - 1);
+		// Conversione da oggetto in formato JSON in oggetto User
+		final User inserted = g.fromJson(resultString, User.class);
+
+		final Optional<User> userData = userRepository.findById(inserted.getId());
+		assertThat(userData.isPresent()).isEqualTo(true);
+
+		final User retrieveUser = userData.get();
 
 		// Controllo su inserimento singoli campi
 		assertThat(retrieveUser.getFirstName()).isEqualTo(CREATED_FNAME);
