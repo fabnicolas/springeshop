@@ -5,10 +5,12 @@
 	<groupId>it.nexsoft.spring.springeshop</groupId>
 	<artifactId>springeshop</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<properties>
-		<java.version>11</java.version>
-		<spring-boot.version>2.7.3</spring-boot.version>
-	</properties>
+    <properties>
+        <java.version>11</java.version>
+        <spring-boot.version>2.7.3</spring-boot.version>
+        <maven.compiler.source>18</maven.compiler.source>
+        <maven.compiler.target>18</maven.compiler.target>
+    </properties>
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -82,7 +84,12 @@
 			<groupId>org.liquibase</groupId>
 			<artifactId>liquibase-core</artifactId>
 		</dependency>
-             
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-config</artifactId>
+			<version>5.7.3</version>
+		</dependency>
+
 	</dependencies>
 	<build>
 		<plugins>
